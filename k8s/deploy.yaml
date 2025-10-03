@@ -28,5 +28,18 @@ spec:
           value: sk081
         - name: NAMESPACE
           value: skala-practice
-        - name: SPRING_PROFILES_ACTIVE  
-          value: "prod"  
+        - name: SPRING_PROFILES_ACTIVE
+          value: "prod"
+        - name: SPRING_WEB_RESOURCES_STATIC_LOCATIONS
+          value: "file:/app/static/,classpath:/static/"
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        volumeMounts:
+        - name: static-content
+          mountPath: /app/static
+          readOnly: true
+      volumes:
+      - name: static-content
+        configMap:
+          name: sk081-static-content
