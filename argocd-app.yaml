@@ -1,19 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: springbootsample
-  namespace: argocd
+  name: sk081-spring_jenkins
+  namespace: skala-argocd
 spec:
-  project: default
-  source:
-    # Jenkinsfile에 입력했던 것과 동일한 Git Repository 주소를 입력하세요.
-    repoURL: '' 
-    targetRevision: main
-    path: springbootsample/k8s # Kubernetes Manifest 파일 경로
   destination:
-    server: https://kubernetes.default.svc
-    namespace: default # 배포할 네임스페이스
+    namespace: skala-practice
+    server: https://96BD83E8CE5CE0396D006BC5CEB350B0.gr7.ap-northeast-2.eks.amazonaws.com
+  project: class-3
+  source:
+    path: k8s
+    repoURL: https://github.com/JHa9980/spring_jenkins.git
+    targetRevision: gitops
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+    - PrunePropagationPolicy=background

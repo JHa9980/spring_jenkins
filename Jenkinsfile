@@ -2,16 +2,18 @@ pipeline {
     agent any
 
     environment {
-        // =================== 사용자 수정 영역 ===================
-        GIT_URL                = '' // 1. 새로 만드신 이 프로젝트의 Git Repository URL
-        GIT_BRANCH             = 'main'
-        GIT_ID                 = '' // 2. Git Repository에 Push 가능한 Credential ID
-        
-        IMAGE_REGISTRY_URL     = '' // 3. 이미지를 저장할 Docker Registry URL (예: docker.io/your-id)
-        DOCKER_CREDENTIAL_ID   = '' // 4. Docker Registry에 로그인할 Credential ID
-        IMAGE_NAME             = 'springbootsample'
-        // =====================================================
-    }
+    // === 사용자 수정 영역 ===
+    GIT_URL                = 'https://github.com/JHa9980/spring_jenkins.git'
+    GIT_BRANCH             = 'main'            // 또는 main
+    GIT_ID                 = 'skala-github-id'   // GitHub PAT credential ID
+    IMAGE_NAME             = 'sk081-spring_jenkins'    
+    // =======================
+    IMAGE_TAG              = '1.0.0'    
+    IMAGE_REGISTRY_URL     = 'amdp-registry.skala-ai.com'
+    IMAGE_REGISTRY_PROJECT = 'skala25a'
+
+    DOCKER_CREDENTIAL_ID   = 'skala-image-registry-id'  // Harbor 인증 정보 ID
+  }
 
     stages {
         stage('Checkout') {
