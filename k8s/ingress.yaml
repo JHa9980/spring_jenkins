@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  name: sk081-myfirst-ingress
+  name: sk081-jenkins-ingress
   namespace: skala-practice
 spec:
   ingressClassName: public-nginx
@@ -13,7 +13,7 @@ spec:
       paths:
       - backend:
           service:
-            name: sk081-myfirst-api-server
+            name: sk081-spring-jenkins
             port:
               number: 8080
         path: /

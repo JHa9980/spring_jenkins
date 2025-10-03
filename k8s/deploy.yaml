@@ -20,7 +20,7 @@ spec:
     spec:
       serviceAccountName: default
       containers:
-      - name: myfirst-api-server
+      - name: spring-jenkins
         image: amdp-registry.skala-ai.com/skala25a/sk081-spring-jenkins:1.0.0
         imagePullPolicy: Always
         env:

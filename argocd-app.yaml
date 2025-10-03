@@ -11,7 +11,7 @@ spec:
   source:
     path: k8s
     repoURL: https://github.com/JHa9980/spring_jenkins.git
-    targetRevision: gitops
+    targetRevision: main
   syncPolicy:
     automated:
       prune: true
