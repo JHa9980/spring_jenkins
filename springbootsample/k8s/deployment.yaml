@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: springbootsample
-        image: your-container-registry/springbootsample:latest # Jenkins 파이프라인에서 자동으로 변경됩니다.
+        image: amdp-registry.skala-ai.com/skala25a/sk081-spring-jenkins:1.0.0
         ports:
         - containerPort: 8080
