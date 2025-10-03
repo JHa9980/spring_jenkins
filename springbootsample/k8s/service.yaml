@@ -1,12 +1,18 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: springbootsample
+  name: sk081-spring-jenkins
+  namespace: skala-practice
 spec:
   selector:
-    app: springbootsample
+    app: sk081-spring-jenkins
   ports:
-    - protocol: TCP
-      port: 80
+    - name: http
+      protocol: TCP
+      port: 8080
       targetPort: 8080
+    - name: mgmt
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
   type: ClusterIP

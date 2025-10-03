@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sk081-spring-jenkins
+  namespace: skala-practice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sk081-spring-jenkins
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '8080'
+        prometheus.io/path: '/actuator/prometheus'
+        update: da353710
+      labels:
+        app: sk081-spring-jenkins
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: myfirst-api-server
+        image: amdp-registry.skala-ai.com/skala25a/sk081-spring-jenkins:1.0.0
+        imagePullPolicy: Always
+        env:
+        - name: USER_NAME
+          value: sk081
+        - name: NAMESPACE
+          value: skala-practice
+        - name: SPRING_PROFILES_ACTIVE  
+          value: "prod"  
