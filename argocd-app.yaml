@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: sk081-spring_jenkins
+  name: sk081-spring-jenkins
   namespace: skala-argocd
 spec:
   destination:

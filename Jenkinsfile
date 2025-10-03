@@ -6,7 +6,7 @@ pipeline {
     GIT_URL                = 'https://github.com/JHa9980/spring_jenkins.git'
     GIT_BRANCH             = 'main'            // 또는 main
     GIT_ID                 = 'skala-github-id'   // GitHub PAT credential ID
-    IMAGE_NAME             = 'sk081-spring_jenkins'    
+    IMAGE_NAME             = 'sk081-spring-jenkins'    
     // =======================
     IMAGE_TAG              = '1.0.0'    
     IMAGE_REGISTRY_URL     = 'amdp-registry.skala-ai.com'
