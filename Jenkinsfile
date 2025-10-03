@@ -25,10 +25,8 @@ pipeline {
 
         stage('Build with Maven') {
             steps {
-                dir('springbootsample') {
-                    echo 'Building Spring Boot application'
-                    sh 'mvn clean package -DskipTests'
-                }
+                echo 'Building Spring Boot application'
+                sh 'mvn clean package -DskipTests'
             }
         }
 
@@ -38,11 +36,9 @@ pipeline {
                     env.IMAGE_TAG = "v${env.BUILD_NUMBER}"
                     env.IMAGE_REF = "${IMAGE_REGISTRY_URL}/${IMAGE_REGISTRY_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
                     
-                    dir('springbootsample') {
-                        docker.withRegistry("https://${IMAGE_REGISTRY_URL}", DOCKER_CREDENTIAL_ID) {
-                            def appImage = docker.build(IMAGE_REF, '.')
-                            appImage.push()
-                        }
+                    docker.withRegistry("https://${IMAGE_REGISTRY_URL}", DOCKER_CREDENTIAL_ID) {
+                        def appImage = docker.build(IMAGE_REF, '.')
+                        appImage.push()
                     }
                     echo "Successfully pushed ${IMAGE_REF}"
                 }
@@ -51,12 +47,12 @@ pipeline {
 
         stage('Update Kubernetes Manifest') {
             steps {
-                dir('springbootsample/k8s') {
+                dir('k8s') {
                     sh 'echo "--- BEFORE ---"'
-                    sh 'grep -n \'image:\' deployment.yaml || true'
-                    sh "sed -i 's|image: .*|image: ${IMAGE_REF}|g' deployment.yaml"
+                    sh 'grep -n \'image:\' deploy.yaml || true'
+                    sh "sed -i 's|image: .*|image: ${IMAGE_REF}|g' deploy.yaml"
                     sh 'echo "--- AFTER ---"'
-                    sh 'grep -n \'image:\' deployment.yaml || true'
+                    sh 'grep -n \'image:\' deploy.yaml || true'
                 }
             }
         }
@@ -70,11 +66,19 @@ pipeline {
                         
                         // 원격 저장소 URL을 인증 정보와 함께 설정
                         def remoteUrl = GIT_URL.replace("https://", "https://${GIT_USER}:${GIT_PASS}@")
-                        
-                        sh "git add springbootsample/k8s/deployment.yaml"
-                        sh "git commit -m '[CI] Update image to ${IMAGE_REF}'"
-                        sh "git push ${remoteUrl} HEAD:${GIT_BRANCH}"
-                        echo "Pushed manifest changes to ${GIT_BRANCH} branch."
+
+                        sh """
+                            set -eux
+                            git add k8s/deploy.yaml
+
+                            if git diff --cached --quiet; then
+                                echo 'No changes to commit'
+                            else
+                                git commit -m "[CI] Update image to ${IMAGE_REF}"
+                                git push ${remoteUrl} HEAD:${GIT_BRANCH}
+                                echo 'Pushed manifest changes to ${GIT_BRANCH} branch.'
+                            fi
+                        """
                     }
                 }
             }

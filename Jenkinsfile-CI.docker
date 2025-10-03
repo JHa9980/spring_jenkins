@@ -88,7 +88,7 @@ pipeline {
       }
     }
 
-    // deployment yaml의 Git 커밋/푸시
+    // deploy yaml의 Git 커밋/푸시
     stage('Git Commit & Push (gitops)') {
       steps {
         script {
@@ -145,4 +145,3 @@ pipeline {
     }
   }
 }
-
