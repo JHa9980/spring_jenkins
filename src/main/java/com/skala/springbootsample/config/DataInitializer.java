@@ -30,6 +30,7 @@ public class DataInitializer implements CommandLineRunner {
         userRepository.save(new User("alice", "alice@example.com", seoul));
         userRepository.save(new User("bob", "bob@example.com", busan));
         userRepository.save(new User("charlie", "charlie@example.com", daegu));
+        userRepository.save(new User("재하", "wogk@skala.com", seoul));
 
         log.info("초기 데이터 설정 완료");
     }
