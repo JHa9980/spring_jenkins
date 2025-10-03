@@ -63,17 +63,19 @@ pipeline {
 
         stage('Git Commit & Push (GitOps)') {
             steps {
-                withCredentials([usernamePassword(credentialsId: GIT_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-                    sh 'git config --global user.name "Jenkins CI"'
-                    sh 'git config --global user.email "jenkins@example.com"'
-                    
-                    // 원격 저장소 URL을 인증 정보와 함께 설정
-                    def remoteUrl = GIT_URL.replace("https://", "https://${GIT_USER}:${GIT_PASS}@")
-                    
-                    sh "git add springbootsample/k8s/deployment.yaml"
-                    sh "git commit -m '[CI] Update image to ${IMAGE_REF}'"
-                    sh "git push ${remoteUrl} HEAD:${GIT_BRANCH}"
-                    echo "Pushed manifest changes to ${GIT_BRANCH} branch."
+                script {
+                    withCredentials([usernamePassword(credentialsId: GIT_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                        sh 'git config --global user.name "Jenkins CI"'
+                        sh 'git config --global user.email "jenkins@example.com"'
+                        
+                        // 원격 저장소 URL을 인증 정보와 함께 설정
+                        def remoteUrl = GIT_URL.replace("https://", "https://${GIT_USER}:${GIT_PASS}@")
+                        
+                        sh "git add springbootsample/k8s/deployment.yaml"
+                        sh "git commit -m '[CI] Update image to ${IMAGE_REF}'"
+                        sh "git push ${remoteUrl} HEAD:${GIT_BRANCH}"
+                        echo "Pushed manifest changes to ${GIT_BRANCH} branch."
+                    }
                 }
             }
         }
