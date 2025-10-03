@@ -19,7 +19,7 @@
       line-height: 1.5;
     }
     header {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      background: linear-gradient(135deg, #38bdf8, #0ea5e9);
       color: #fff;
       padding: 32px 24px;
       text-align: center;
@@ -164,71 +164,13 @@
 </head>
 <body>
   <header>
-    <h1>Spring Jenkins Demo Console</h1>
-    <p>서비스 상태 확인, 사용자/지역 관리, Probe 제어를 한 화면에서 실행하세요.</p>
+    <h1>지역/사용자 정보 관리</h1>
   </header>
 
   <main id="app">
     <section v-if="toast" class="message" :class="toast.type">{{ toast.text }}</section>
 
     <div class="grid">
-      <article class="panel">
-        <div class="flex-row" style="justify-content: space-between; align-items: center;">
-          <h2>애플리케이션 상태</h2>
-          <button @click="refreshAll" :disabled="busy.any">전체 새로고침</button>
-        </div>
-        <div>
-          <label>Proxy 서비스</label>
-          <div class="actions">
-            <button @click="callProxy" :disabled="busy.proxy">호출하기</button>
-            <span v-if="proxyMessage">{{ proxyMessage }}</span>
-          </div>
-        </div>
-        <div class="section-divider"></div>
-        <div>
-          <label>Probe 상태</label>
-          <div v-if="probe">
-            <span class="status-pill" :class="probe.liveness === 'CORRECT' ? 'ok' : 'warn'">
-              Liveness: {{ probe.liveness }}
-            </span>
-            <span class="status-pill" :class="probe.readiness === 'ACCEPTING_TRAFFIC' ? 'ok' : 'warn'">
-              Readiness: {{ probe.readiness }}
-            </span>
-          </div>
-          <div class="flex-row" style="margin-top: 12px;">
-            <div class="flex-grow">
-              <label for="liveSelect">Liveness</label>
-              <select id="liveSelect" v-model="probeUpdate.liveness">
-                <option value="CORRECT">CORRECT</option>
-                <option value="BROKEN">BROKEN</option>
-              </select>
-            </div>
-            <div class="flex-grow">
-              <label for="readySelect">Readiness</label>
-              <select id="readySelect" v-model="probeUpdate.readiness">
-                <option value="ACCEPTING_TRAFFIC">ACCEPTING_TRAFFIC</option>
-                <option value="REFUSING_TRAFFIC">REFUSING_TRAFFIC</option>
-              </select>
-            </div>
-          </div>
-          <button @click="updateProbe" :disabled="busy.probe">상태 반영</button>
-        </div>
-      </article>
-
-      <article class="panel">
-        <h2>개발자 정보</h2>
-        <button class="secondary" @click="loadDeveloperInfo" :disabled="busy.developer">불러오기</button>
-        <div v-if="developerInfo">
-          <h3>Owner</h3>
-          <p><strong>이름:</strong> {{ developerInfo.owner.name }}</p>
-          <p><strong>역할:</strong> {{ developerInfo.owner.role }}</p>
-          <p><strong>레벨:</strong> {{ developerInfo.owner.level }}</p>
-          <h3>Team</h3>
-          <p><strong>포지션:</strong> {{ developerInfo.team.position }}</p>
-          <p><strong>설명:</strong> {{ developerInfo.team.detail }}</p>
-        </div>
-      </article>
-
       <article class="panel" style="grid-column: 1 / -1;">
         <div class="flex-row" style="justify-content: space-between; align-items: center;">
           <h2>지역 관리</h2>
@@ -351,6 +293,18 @@
             <button class="secondary" @click="cancelEdit">취소</button>
           </div>
         </div>
+
+        <div class="actions" style="margin-top: 16px;">
+          <button type="button" class="secondary" @click="openSwagger">Swagger UI로 이동</button>
+        </div>
+      </article>
+
+      <article class="panel" style="grid-column: 1 / -1;">
+        <h2>Prometheus 모니터링</h2>
+        <p>애플리케이션 메트릭을 Prometheus 형식으로 확인할 수 있습니다.</p>
+        <div class="actions">
+          <button type="button" @click="openPrometheus">Prometheus Metrics 열기</button>
+        </div>
       </article>
     </div>
   </main>
@@ -363,7 +317,6 @@
       data() {
         return {
           toast: null,
-          developerInfo: null,
           regions: [],
           newRegionName: '',
           regionError: '',
@@ -372,22 +325,15 @@
           newUser: { name: '', email: '', regionId: '' },
           userError: '',
           editUser: null,
-          probe: null,
-          probeUpdate: { liveness: 'CORRECT', readiness: 'ACCEPTING_TRAFFIC' },
-          proxyMessage: '',
           busy: {
-            any: false,
-            developer: false,
             regions: false,
-            users: false,
-            probe: false,
-            proxy: false
+            users: false
           }
         };
       },
       methods: {
         setToast(text, type = 'success') {
-          this.toast = { text, type: `message ${type}` };
+          this.toast = { text, type };
           setTimeout(() => (this.toast = null), 3500);
         },
         async request(path, options = {}) {
@@ -409,32 +355,6 @@
           } catch (err) {
             console.error('Request failed', err);
             throw err;
-          }
-        },
-        async refreshAll() {
-          this.busy.any = true;
-          try {
-            await Promise.all([
-              this.loadDeveloperInfo(),
-              this.loadRegions(),
-              this.loadUsers(),
-              this.loadProbe()
-            ]);
-            this.setToast('데이터를 갱신했습니다.');
-          } catch (err) {
-            this.setToast(err.message || '갱신 중 오류가 발생했습니다.', 'error');
-          } finally {
-            this.busy.any = false;
-          }
-        },
-        async loadDeveloperInfo() {
-          this.busy.developer = true;
-          try {
-            this.developerInfo = await this.request('/api/developer-info', { method: 'GET' });
-          } catch (err) {
-            this.setToast(err.message || '개발자 정보를 불러오지 못했습니다.', 'error');
-          } finally {
-            this.busy.developer = false;
           }
         },
         async loadRegions() {
@@ -584,46 +504,22 @@
             this.busy.users = false;
           }
         },
-        async loadProbe() {
-          try {
-            this.probe = await this.request('/api/probe', { method: 'GET' });
-            this.probeUpdate = {
-              liveness: this.probe.liveness,
-              readiness: this.probe.readiness
-            };
-          } catch (err) {
-            this.setToast(err.message || 'Probe 정보를 불러올 수 없습니다.', 'error');
-          }
+        openSwagger() {
+          window.open('https://sk081-ingress.skala25a.project.skala-ai.com/swagger/swagger-ui/', '_blank', 'noopener');
         },
-        async updateProbe() {
-          this.busy.probe = true;
-          try {
-            this.probe = await this.request('/api/probe', {
-              method: 'POST',
-              body: JSON.stringify(this.probeUpdate)
-            });
-            this.setToast('Probe 상태가 업데이트되었습니다.');
-          } catch (err) {
-            this.setToast(err.message || 'Probe 업데이트에 실패했습니다.', 'error');
-          } finally {
-            this.busy.probe = false;
-          }
+        openPrometheus() {
+          window.open('https://sk081-ingress.skala25a.project.skala-ai.com/actuator/prometheus', '_blank', 'noopener');
         },
-        async callProxy() {
-          this.busy.proxy = true;
+        async mountedLoad() {
           try {
-            const text = await this.request('/api/proxy', { method: 'GET', headers: {} });
-            this.proxyMessage = typeof text === 'string' ? text : JSON.stringify(text);
+            await Promise.all([this.loadRegions(), this.loadUsers()]);
           } catch (err) {
-            this.proxyMessage = '';
-            this.setToast(err.message || 'Proxy 호출에 실패했습니다.', 'error');
-          } finally {
-            this.busy.proxy = false;
+            this.setToast(err.message || '초기 데이터를 불러오지 못했습니다.', 'error');
           }
         }
       },
       async mounted() {
-        await this.refreshAll();
+        await this.mountedLoad();
       }
     }).mount('#app');
   </script>
