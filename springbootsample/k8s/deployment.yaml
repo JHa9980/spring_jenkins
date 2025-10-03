@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: springbootsample
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: springbootsample
+  template:
+    metadata:
+      labels:
+        app: springbootsample
+    spec:
+      containers:
+      - name: springbootsample
+        image: your-container-registry/springbootsample:latest # Jenkins 파이프라인에서 자동으로 변경됩니다.
+        ports:
+        - containerPort: 8080

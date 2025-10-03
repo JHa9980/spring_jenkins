@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: springbootsample
+  namespace: argocd
+spec:
+  project: default
+  source:
+    # Jenkinsfile에 입력했던 것과 동일한 Git Repository 주소를 입력하세요.
+    repoURL: '' 
+    targetRevision: main
+    path: springbootsample/k8s # Kubernetes Manifest 파일 경로
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default # 배포할 네임스페이스
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
