@@ -3,7 +3,7 @@ kind: Ingress
 metadata:
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
-  name: sk081-jenkins-ingress
+  name: sk081-myfirst-ingress
   namespace: skala-practice
 spec:
   ingressClassName: public-nginx
