@@ -21,7 +21,7 @@ spec:
       serviceAccountName: default
       containers:
       - name: myfirst-api-server
-        image: amdp-registry.skala-ai.com/skala25a/sk081-spring-jenkins:1.0.0
+        image: amdp-registry.skala-ai.com/skala25a/sk081-spring-jenkins:1.0.0-ff80615b2d81
         imagePullPolicy: Always
         env:
         - name: USER_NAME
