@@ -36,7 +36,7 @@ pipeline {
             steps {
                 script {
                     env.IMAGE_TAG = "v${env.BUILD_NUMBER}"
-                    env.IMAGE_REF = "${IMAGE_REGISTRY_URL}/${IMAGE_NAME}:${IMAGE_TAG}"
+                    env.IMAGE_REF = "${IMAGE_REGISTRY_URL}/${IMAGE_REGISTRY_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
                     
                     dir('springbootsample') {
                         docker.withRegistry("https://${IMAGE_REGISTRY_URL}", DOCKER_CREDENTIAL_ID) {
