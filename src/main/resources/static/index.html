@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spring Jenkins Demo Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      color-scheme: light dark;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fb;
+      color: #1f2933;
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
+      color: #fff;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    header p {
+      margin: 8px 0 0;
+      opacity: 0.9;
+      font-size: 15px;
+    }
+    main {
+      max-width: 1100px;
+      margin: -40px auto 48px;
+      padding: 0 16px 32px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+    .panel {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 20px 35px -30px rgba(15, 23, 42, 0.45);
+      padding: 20px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #1d4ed8;
+    }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button.secondary {
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+    button.danger {
+      background: #ef4444;
+    }
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    button:hover:not(:disabled) {
+      background: #1d4ed8;
+    }
+    label {
+      font-size: 13px;
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+    th {
+      font-size: 13px;
+      color: #475569;
+      font-weight: 600;
+    }
+    .message {
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+    .message.success {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .message.error {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .status-pill.ok {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .status-pill.warn {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .flex-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .flex-grow {
+      flex: 1 1 200px;
+    }
+    .section-divider {
+      border-top: 1px solid #e5e7eb;
+      margin: 8px 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Spring Jenkins Demo Console</h1>
+    <p>서비스 상태 확인, 사용자/지역 관리, Probe 제어를 한 화면에서 실행하세요.</p>
+  </header>
+
+  <main id="app">
+    <section v-if="toast" class="message" :class="toast.type">{{ toast.text }}</section>
+
+    <div class="grid">
+      <article class="panel">
+        <div class="flex-row" style="justify-content: space-between; align-items: center;">
+          <h2>애플리케이션 상태</h2>
+          <button @click="refreshAll" :disabled="busy.any">전체 새로고침</button>
+        </div>
+        <div>
+          <label>Proxy 서비스</label>
+          <div class="actions">
+            <button @click="callProxy" :disabled="busy.proxy">호출하기</button>
+            <span v-if="proxyMessage">{{ proxyMessage }}</span>
+          </div>
+        </div>
+        <div class="section-divider"></div>
+        <div>
+          <label>Probe 상태</label>
+          <div v-if="probe">
+            <span class="status-pill" :class="probe.liveness === 'CORRECT' ? 'ok' : 'warn'">
+              Liveness: {{ probe.liveness }}
+            </span>
+            <span class="status-pill" :class="probe.readiness === 'ACCEPTING_TRAFFIC' ? 'ok' : 'warn'">
+              Readiness: {{ probe.readiness }}
+            </span>
+          </div>
+          <div class="flex-row" style="margin-top: 12px;">
+            <div class="flex-grow">
+              <label for="liveSelect">Liveness</label>
+              <select id="liveSelect" v-model="probeUpdate.liveness">
+                <option value="CORRECT">CORRECT</option>
+                <option value="BROKEN">BROKEN</option>
+              </select>
+            </div>
+            <div class="flex-grow">
+              <label for="readySelect">Readiness</label>
+              <select id="readySelect" v-model="probeUpdate.readiness">
+                <option value="ACCEPTING_TRAFFIC">ACCEPTING_TRAFFIC</option>
+                <option value="REFUSING_TRAFFIC">REFUSING_TRAFFIC</option>
+              </select>
+            </div>
+          </div>
+          <button @click="updateProbe" :disabled="busy.probe">상태 반영</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <h2>개발자 정보</h2>
+        <button class="secondary" @click="loadDeveloperInfo" :disabled="busy.developer">불러오기</button>
+        <div v-if="developerInfo">
+          <h3>Owner</h3>
+          <p><strong>이름:</strong> {{ developerInfo.owner.name }}</p>
+          <p><strong>역할:</strong> {{ developerInfo.owner.role }}</p>
+          <p><strong>레벨:</strong> {{ developerInfo.owner.level }}</p>
+          <h3>Team</h3>
+          <p><strong>포지션:</strong> {{ developerInfo.team.position }}</p>
+          <p><strong>설명:</strong> {{ developerInfo.team.detail }}</p>
+        </div>
+      </article>
+
+      <article class="panel" style="grid-column: 1 / -1;">
+        <div class="flex-row" style="justify-content: space-between; align-items: center;">
+          <h2>지역 관리</h2>
+          <button class="secondary" @click="loadRegions" :disabled="busy.regions">새로고침</button>
+        </div>
+        <form @submit.prevent="createRegion" class="flex-row">
+          <div class="flex-grow">
+            <label for="regionName">새 지역 이름</label>
+            <input id="regionName" v-model="newRegionName" placeholder="예: 서울" required />
+          </div>
+          <div style="align-self: flex-end;">
+            <button type="submit" :disabled="busy.regions">추가</button>
+          </div>
+        </form>
+        <p v-if="regionError" class="message error">{{ regionError }}</p>
+        <table v-if="regions.length">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>사용자 수</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="region in regions" :key="region.id">
+              <td>{{ region.id }}</td>
+              <td>{{ region.name }}</td>
+              <td>{{ region.users ? region.users.length : 0 }}</td>
+              <td>
+                <button class="danger" @click="deleteRegion(region.id)" :disabled="busy.regions">삭제</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else>등록된 지역이 없습니다.</p>
+      </article>
+
+      <article class="panel" style="grid-column: 1 / -1;">
+        <div class="flex-row" style="justify-content: space-between; align-items: center;">
+          <h2>사용자 관리</h2>
+          <div class="flex-row" style="gap: 6px;">
+            <input v-model="userFilter" placeholder="이름으로 검색" style="max-width: 200px;" />
+            <button class="secondary" @click="loadUsers" :disabled="busy.users">검색</button>
+            <button class="secondary" @click="resetUserFilter" :disabled="busy.users">초기화</button>
+          </div>
+        </div>
+
+        <form @submit.prevent="createUser" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+          <div>
+            <label for="userName">이름</label>
+            <input id="userName" v-model="newUser.name" required />
+          </div>
+          <div>
+            <label for="userEmail">이메일</label>
+            <input id="userEmail" v-model="newUser.email" type="email" required />
+          </div>
+          <div>
+            <label for="userRegion">지역 선택</label>
+            <select id="userRegion" v-model="newUser.regionId" required>
+              <option disabled value="">지역 선택</option>
+              <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
+            </select>
+          </div>
+          <div style="align-self: flex-end;">
+            <button type="submit" :disabled="busy.users || regions.length === 0">사용자 추가</button>
+          </div>
+        </form>
+        <p v-if="userError" class="message error">{{ userError }}</p>
+
+        <table v-if="users.length">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>이메일</th>
+              <th>지역</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="user in users" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.region ? user.region.name : '-' }}</td>
+              <td class="actions">
+                <button class="secondary" @click="startEditUser(user)">수정</button>
+                <button class="danger" @click="deleteUser(user.id)" :disabled="busy.users">삭제</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else>등록된 사용자가 없습니다.</p>
+
+        <div v-if="editUser" class="panel" style="margin-top: 16px; background:#eef2ff;">
+          <div class="flex-row" style="justify-content: space-between; align-items: center;">
+            <h3>사용자 수정 (ID: {{ editUser.id }})</h3>
+            <button class="secondary" @click="cancelEdit">닫기</button>
+          </div>
+          <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <div>
+              <label>이름</label>
+              <input v-model="editUser.name" />
+            </div>
+            <div>
+              <label>이메일</label>
+              <input v-model="editUser.email" />
+            </div>
+            <div>
+              <label>지역</label>
+              <select v-model="editUser.regionId">
+                <option disabled value="">지역 선택</option>
+                <option v-for="region in regions" :key="region.id" :value="region.id">{{ region.name }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions" style="margin-top: 12px;">
+            <button @click="updateUser" :disabled="busy.users">저장</button>
+            <button class="secondary" @click="cancelEdit">취소</button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          toast: null,
+          developerInfo: null,
+          regions: [],
+          newRegionName: '',
+          regionError: '',
+          users: [],
+          userFilter: '',
+          newUser: { name: '', email: '', regionId: '' },
+          userError: '',
+          editUser: null,
+          probe: null,
+          probeUpdate: { liveness: 'CORRECT', readiness: 'ACCEPTING_TRAFFIC' },
+          proxyMessage: '',
+          busy: {
+            any: false,
+            developer: false,
+            regions: false,
+            users: false,
+            probe: false,
+            proxy: false
+          }
+        };
+      },
+      methods: {
+        setToast(text, type = 'success') {
+          this.toast = { text, type: `message ${type}` };
+          setTimeout(() => (this.toast = null), 3500);
+        },
+        async request(path, options = {}) {
+          const opts = {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options
+          };
+          try {
+            const res = await fetch(path, opts);
+            if (!res.ok) {
+              const text = await res.text();
+              throw new Error(text || `${res.status} ${res.statusText}`);
+            }
+            const contentType = res.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+              return await res.json();
+            }
+            return await res.text();
+          } catch (err) {
+            console.error('Request failed', err);
+            throw err;
+          }
+        },
+        async refreshAll() {
+          this.busy.any = true;
+          try {
+            await Promise.all([
+              this.loadDeveloperInfo(),
+              this.loadRegions(),
+              this.loadUsers(),
+              this.loadProbe()
+            ]);
+            this.setToast('데이터를 갱신했습니다.');
+          } catch (err) {
+            this.setToast(err.message || '갱신 중 오류가 발생했습니다.', 'error');
+          } finally {
+            this.busy.any = false;
+          }
+        },
+        async loadDeveloperInfo() {
+          this.busy.developer = true;
+          try {
+            this.developerInfo = await this.request('/api/developer-info', { method: 'GET' });
+          } catch (err) {
+            this.setToast(err.message || '개발자 정보를 불러오지 못했습니다.', 'error');
+          } finally {
+            this.busy.developer = false;
+          }
+        },
+        async loadRegions() {
+          this.busy.regions = true;
+          this.regionError = '';
+          try {
+            this.regions = await this.request('/api/regions', { method: 'GET' });
+          } catch (err) {
+            this.regionError = err.message || '지역 정보를 불러올 수 없습니다.';
+            this.setToast(this.regionError, 'error');
+          } finally {
+            this.busy.regions = false;
+          }
+        },
+        async createRegion() {
+          if (!this.newRegionName.trim()) {
+            return;
+          }
+          this.busy.regions = true;
+          this.regionError = '';
+          try {
+            await this.request('/api/regions', {
+              method: 'POST',
+              body: JSON.stringify({ name: this.newRegionName.trim() })
+            });
+            this.newRegionName = '';
+            await this.loadRegions();
+            this.setToast('새 지역이 등록되었습니다.');
+          } catch (err) {
+            this.regionError = err.message || '지역 등록에 실패했습니다.';
+            this.setToast(this.regionError, 'error');
+          } finally {
+            this.busy.regions = false;
+          }
+        },
+        async deleteRegion(id) {
+          if (!confirm('해당 지역을 삭제하시겠습니까?')) {
+            return;
+          }
+          this.busy.regions = true;
+          try {
+            await this.request(`/api/regions/${id}`, { method: 'DELETE' });
+            await this.loadRegions();
+            await this.loadUsers();
+            this.setToast('지역이 삭제되었습니다.');
+          } catch (err) {
+            this.setToast(err.message || '지역 삭제에 실패했습니다.', 'error');
+          } finally {
+            this.busy.regions = false;
+          }
+        },
+        async loadUsers() {
+          this.busy.users = true;
+          this.userError = '';
+          try {
+            const query = this.userFilter ? `?name=${encodeURIComponent(this.userFilter.trim())}` : '';
+            this.users = await this.request(`/api/users${query}`, { method: 'GET' });
+          } catch (err) {
+            this.userError = err.message || '사용자 정보를 불러오지 못했습니다.';
+            this.setToast(this.userError, 'error');
+          } finally {
+            this.busy.users = false;
+          }
+        },
+        resetUserFilter() {
+          this.userFilter = '';
+          this.loadUsers();
+        },
+        async createUser() {
+          if (!this.newUser.name || !this.newUser.email || !this.newUser.regionId) {
+            this.userError = '모든 필드를 입력해 주세요.';
+            return;
+          }
+          this.busy.users = true;
+          this.userError = '';
+          try {
+            const payload = {
+              name: this.newUser.name.trim(),
+              email: this.newUser.email.trim(),
+              region: { id: Number(this.newUser.regionId) }
+            };
+            await this.request('/api/users', {
+              method: 'POST',
+              body: JSON.stringify(payload)
+            });
+            this.newUser = { name: '', email: '', regionId: '' };
+            await Promise.all([this.loadUsers(), this.loadRegions()]);
+            this.setToast('사용자가 생성되었습니다.');
+          } catch (err) {
+            this.userError = err.message || '사용자 생성에 실패했습니다.';
+            this.setToast(this.userError, 'error');
+          } finally {
+            this.busy.users = false;
+          }
+        },
+        startEditUser(user) {
+          this.editUser = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            regionId: user.region ? String(user.region.id) : ''
+          };
+        },
+        cancelEdit() {
+          this.editUser = null;
+        },
+        async updateUser() {
+          if (!this.editUser) return;
+          if (!this.editUser.name || !this.editUser.email || !this.editUser.regionId) {
+            this.userError = '모든 필드를 입력해 주세요.';
+            return;
+          }
+          this.busy.users = true;
+          try {
+            const payload = {
+              id: this.editUser.id,
+              name: this.editUser.name.trim(),
+              email: this.editUser.email.trim(),
+              region: { id: Number(this.editUser.regionId) }
+            };
+            await this.request(`/api/users/${this.editUser.id}`, {
+              method: 'PUT',
+              body: JSON.stringify(payload)
+            });
+            this.setToast('사용자 정보가 수정되었습니다.');
+            this.editUser = null;
+            await this.loadUsers();
+          } catch (err) {
+            this.userError = err.message || '사용자 수정에 실패했습니다.';
+            this.setToast(this.userError, 'error');
+          } finally {
+            this.busy.users = false;
+          }
+        },
+        async deleteUser(id) {
+          if (!confirm('해당 사용자를 삭제하시겠습니까?')) {
+            return;
+          }
+          this.busy.users = true;
+          try {
+            await this.request(`/api/users/${id}`, { method: 'DELETE' });
+            this.setToast('사용자가 삭제되었습니다.');
+            await this.loadUsers();
+          } catch (err) {
+            this.setToast(err.message || '사용자 삭제에 실패했습니다.', 'error');
+          } finally {
+            this.busy.users = false;
+          }
+        },
+        async loadProbe() {
+          try {
+            this.probe = await this.request('/api/probe', { method: 'GET' });
+            this.probeUpdate = {
+              liveness: this.probe.liveness,
+              readiness: this.probe.readiness
+            };
+          } catch (err) {
+            this.setToast(err.message || 'Probe 정보를 불러올 수 없습니다.', 'error');
+          }
+        },
+        async updateProbe() {
+          this.busy.probe = true;
+          try {
+            this.probe = await this.request('/api/probe', {
+              method: 'POST',
+              body: JSON.stringify(this.probeUpdate)
+            });
+            this.setToast('Probe 상태가 업데이트되었습니다.');
+          } catch (err) {
+            this.setToast(err.message || 'Probe 업데이트에 실패했습니다.', 'error');
+          } finally {
+            this.busy.probe = false;
+          }
+        },
+        async callProxy() {
+          this.busy.proxy = true;
+          try {
+            const text = await this.request('/api/proxy', { method: 'GET', headers: {} });
+            this.proxyMessage = typeof text === 'string' ? text : JSON.stringify(text);
+          } catch (err) {
+            this.proxyMessage = '';
+            this.setToast(err.message || 'Proxy 호출에 실패했습니다.', 'error');
+          } finally {
+            this.busy.proxy = false;
+          }
+        }
+      },
+      async mounted() {
+        await this.refreshAll();
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
