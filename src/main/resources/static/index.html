@@ -53,7 +53,11 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      order: 3;
     }
+    .panel-users { order: 1; }
+    .panel-region { order: 2; }
+    .panel-swagger { order: 4; }
     .panel h2 {
       margin: 0;
       font-size: 18px;
@@ -172,45 +176,7 @@
     <section v-if="toast" class="message" :class="toast.type">{{ toast.text }}</section>
 
     <div class="grid">
-      <article class="panel" style="grid-column: 1 / -1;">
-        <div class="flex-row" style="justify-content: space-between; align-items: center;">
-          <h2>지역 관리</h2>
-          <button class="secondary" @click="loadRegions" :disabled="busy.regions">새로고침</button>
-        </div>
-        <form @submit.prevent="createRegion" class="flex-row">
-          <div class="flex-grow">
-            <label for="regionName">새 지역 이름</label>
-            <input id="regionName" v-model="newRegionName" placeholder="예: 서울" required />
-          </div>
-          <div style="align-self: flex-end;">
-            <button type="submit" :disabled="busy.regions">추가</button>
-          </div>
-        </form>
-        <p v-if="regionError" class="message error">{{ regionError }}</p>
-        <table v-if="regions.length">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>이름</th>
-              <th>사용자 수</th>
-              <th>작업</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="region in regions" :key="region.id">
-              <td>{{ region.id }}</td>
-              <td>{{ region.name }}</td>
-              <td>{{ region.users ? region.users.length : 0 }}</td>
-              <td>
-                <button class="danger" @click="deleteRegion(region.id)" :disabled="busy.regions">삭제</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p v-else>등록된 지역이 없습니다.</p>
-      </article>
-
-      <article class="panel" style="grid-column: 1 / -1;">
+      <article class="panel panel-users" style="grid-column: 1 / -1;">
         <div class="flex-row" style="justify-content: space-between; align-items: center;">
           <h2>사용자 관리</h2>
           <div class="flex-row" style="gap: 6px;">
@@ -298,7 +264,43 @@
         
       </article>
 
-      <article class="panel" style="grid-column: 1 / -1;">
+      <article class="panel panel-region" style="grid-column: 1 / -1;">
+        <div class="flex-row" style="justify-content: space-between; align-items: center;">
+          <h2>지역 관리</h2>
+          <button class="secondary" @click="loadRegions" :disabled="busy.regions">새로고침</button>
+        </div>
+        <form @submit.prevent="createRegion" class="flex-row">
+          <div class="flex-grow">
+            <label for="regionName">새 지역 이름</label>
+            <input id="regionName" v-model="newRegionName" placeholder="예: 서울" required />
+          </div>
+          <div style="align-self: flex-end;">
+            <button type="submit" :disabled="busy.regions">추가</button>
+          </div>
+        </form>
+        <p v-if="regionError" class="message error">{{ regionError }}</p>
+        <table v-if="regions.length">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>이름</th>
+              <th>작업</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="region in regions" :key="region.id">
+              <td>{{ region.id }}</td>
+              <td>{{ region.name }}</td>
+              <td>
+                <button class="danger" @click="deleteRegion(region.id)" :disabled="busy.regions">삭제</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <p v-else>등록된 지역이 없습니다.</p>
+      </article>
+
+      <article class="panel panel-swagger" style="grid-column: 1 / -1;">
         <h2>Swagger</h2>
         <div class="actions" style="margin-top: 16px;">
           <button type="button" class="secondary" @click="openSwagger">Swagger UI로 이동</button>
