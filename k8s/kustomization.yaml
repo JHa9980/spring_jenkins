@@ -13,4 +13,4 @@ configMapGenerator:
   - name: sk081-static-content
     namespace: skala-practice
     files:
-      - index.html=../src/main/resources/static/index.html
+      - index.html=static/index.html
